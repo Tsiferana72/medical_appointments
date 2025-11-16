@@ -1,28 +1,38 @@
-const mysql = require('mysql2');
+const mysql = require('mysql2/promise');
 require('dotenv').config();
 
-// Créer un pool de connexions
-const pool = mysql.createPool({
-  host: process.env.DB_HOST,
-  user: process.env.DB_USER,
+// Configuration de la base de données
+const dbConfig = {
+  host: process.env.DB_HOST || 'localhost',
+  user: process.env.DB_USER || 'root',
   password: process.env.DB_PASSWORD,
-  database: process.env.DB_NAME,
+  database: process.env.DB_NAME || 'medical_appointments',
   waitForConnections: true,
   connectionLimit: 10,
-  queueLimit: 0
-});
+  queueLimit: 0,
+  enableKeepAlive: true,
+  keepAliveInitialDelay: 0
+};
 
-// Utiliser les promesses
-const promisePool = pool.promise();
+// En production, ajouter des options SSL si nécessaire
+if (process.env.NODE_ENV === 'production' && process.env.DB_SSL === 'true') {
+  dbConfig.ssl = {
+    rejectUnauthorized: false
+  };
+}
+
+// Créer le pool de connexions
+const pool = mysql.createPool(dbConfig);
 
 // Tester la connexion
-pool.getConnection((err, connection) => {
-  if (err) {
-    console.error('❌ Erreur de connexion à la base de données:', err.message);
-    return;
-  }
-  console.log('✅ Connecté à MySQL avec succès');
-  connection.release();
-});
+pool.getConnection()
+  .then(connection => {
+    console.log('✅ Connecté à MySQL avec succès');
+    connection.release();
+  })
+  .catch(err => {
+    console.error('❌ Erreur de connexion MySQL:', err.message);
+    process.exit(1);
+  });
 
-module.exports = promisePool;
+module.exports = pool;

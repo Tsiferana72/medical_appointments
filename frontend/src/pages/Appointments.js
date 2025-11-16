@@ -2,6 +2,8 @@ import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import axios from 'axios';
 
+const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:5000';
+
 function Appointments({ user, onLogout }) {
   const [appointments, setAppointments] = useState([]);
   const [doctors, setDoctors] = useState([]);
@@ -26,7 +28,7 @@ function Appointments({ user, onLogout }) {
 
   const fetchAppointments = async () => {
     try {
-      const response = await axios.get('/appointments');
+      const response = await axios.get(`${API_URL}/appointments`);
       setAppointments(response.data);
     } catch (error) {
       console.error('Erreur:', error);
